@@ -1,0 +1,39 @@
+include modals
+.navbar.navbar-fixed-top
+  .navbar-inner
+    .container
+      button.btn.btn-navbar(type="button",data-toggle="collapse",data-target=".nav-collapse")
+        span.icon-bar
+        span.icon-bar
+        span.icon-bar
+      //- Site name
+      a(href="#").brand MY PROJECT
+      //- nav bar content
+      .nav-collapse.collapse
+        ul.nav
+          li.active
+            a(href='#') Home
+          li
+            a(href='#about') About
+          li
+            a(href='#contact') Contact
+        //- drop down menu
+        ul.nav.pull-right
+          - if (typeof user !== 'undefined')
+            li.dropdown
+              a.dropdown-toogle(href='#', data-toggle='dropdown')
+                | My Account
+                strong.caret
+              ul.dropdown-menu
+                li
+                  a(href='#') Settings
+                li
+                  a(href='/logout') Log Out
+          - else
+            li
+              a(href='#registerModal', data-toggle='modal') Sign Up
+            li.divider-vertical
+            li
+              a(href='#loginModal', data-toggle='modal') Sign In
+      //
+        /.nav-collapse
