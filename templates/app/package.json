@@ -11,10 +11,11 @@
     "express": ">=3.1.0",
     "jade": "*",
     "mongoose": "*",
+    "connect-mongo": "*",
     "passport": "*",
     "passport-local": "*",
     "connect-flash": "*",
-    "brypt": "*"
+    "bcrypt": "*"
   },
   "tests": {
     "mocha": "*"

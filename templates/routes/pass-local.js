@@ -17,10 +17,14 @@ passport.use(new LocalStrategy( {
       if (!user) { 
 	return done(null, false, { message: 'Invalid email address.' }); 
       }
-      if (!user.validPassword(password)) {
-	return done(null, false, { message: 'Invalid password.' });
-      }
-      return done(null, user);
+      user.validPassword(password, function(err, isMatch) {
+	if (err) { return done(err); }
+	if (!isMatch) {
+	  return done(null, false, { message: 'Invalid password.' });
+	} else {
+	  return done(null, user);
+	}
+      });
     });
   }));
 

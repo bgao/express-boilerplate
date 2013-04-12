@@ -1,5 +1,5 @@
 var passport = require('passport')
-  , pass_local = require('../modules/pass-local')
+  , pass_local = require('./pass-local')
   , User = require('../models/user').User;
   
 
@@ -13,18 +13,16 @@ module.exports = function(app) {
     User.register({email: req.body.email, password: req.body.password}, function(err, user) {
       if (err) {
         console.log(err);
-        // return res.render('register', { user: user, messages: err });
+        // TODO: Update the view to show errors
       }
       res.redirect('/');
     });
   });
 
   // POST /login
-  //   This is an alternative implementation that uses a custom callback to
-  //   acheive the same functionality.
   app.post('/login', passport.authenticate('local', { successRedirect: '/', 
 						    failureRedirect: '/login' }));
-
+  // /logout
   app.get('/logout', function(req, res) {
     req.logout();
     res.redirect('/');
