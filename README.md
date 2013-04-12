@@ -1,7 +1,7 @@
 # express-boilerplate
 ===================
 
-Express.js boilerplate integrated Passport, Nodemailer, Initializr.
+Express.js boilerplate integrated Passport, Nodemailer and Initializr(Bootstrap).
 
 This project stole [node-boilerplate](https://github.com/robrighter/node-boilerplate#node-boilerplate-version-2)'s idea, which I think is the most easy-use boilerplate ever.
 
@@ -10,7 +10,9 @@ However, I feel it could be more useful, if some most popular components were in
 ===================
 
 ## Development
-After you initialize your project, you'll have a basic app with a simple User model (email, password), signup/login/logout APIs, Passport Local-Strategy authentication in Twitter-Bootstrap style.
+After you initialize your project, you'll have a basic app with a simple User model (email, password) using Mongoose, signup/login/logout features using the Passport Local-Strategy authentication in Twitter-Bootstrap style.
+
+You need to update the ./app.js and ./models/user.js for your MongoDB connection.
 
 It supports the latest version of Express.js and Node.js and the others, as I didn't restrict the version. So please let me know, if there's anything broken.
 A list of dependencies:
