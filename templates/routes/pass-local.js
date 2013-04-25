@@ -13,17 +13,46 @@ passport.use(new LocalStrategy( {
   },
   function(email, password, done) {
     User.findOne({email: email}, function(err, user) {
-      if (err) { return done(err); }
+      if (err) return done(err);
+
+      var reason = User.failedLogin;
+      // make sure the user exists
       if (!user) { 
 	return done(null, false, { message: 'Invalid email address.' }); 
       }
-      user.validPassword(password, function(err, isMatch) {
-	if (err) { return done(err); }
-	if (!isMatch) {
-	  return done(null, false, { message: 'Invalid password.' });
-	} else {
-	  return done(null, user);
+
+      // check if the account is currently locked
+      if (user.isLocked) {
+	// just increment login attempts if account is already locked
+	return user.incLoginAttempts(function(err) {
+	  if (err) return done(err);
+	  return done(null, false, { message: 'Account is locked.' }); 
+	});
+      }
+
+      user.comparePassword(password, function(err, isMatch) {
+	if (err) return done(err);
+
+	// check if the password was a match
+	if (isMatch) {
+	  // if there's no lock for failed attempts, just return the user
+	  if (!user.loginAttempts && !user.lockUntil) return done(null, user);
+	  // reset attempts and lock info
+	  var updates = {
+	    $set: { loginAttempts: 0 },
+	    $unset: { lockUntil: 1 }
+	  };
+	  return user.update(updates, function(err) {
+	    if (err) return done(err);
+	    return done(null, user);
+	  });
 	}
+
+	// password is incorrect, so increment login attempts before responding
+	user.incLoginAttempts(function(err) {
+	  if (err) return done(err);
+	  return done(null, false, { message: 'Invalid password.' });
+	});
       });
     });
   }));

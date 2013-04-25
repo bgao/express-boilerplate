@@ -4,12 +4,17 @@
  */
 var mongoose = require('mongoose')
   , bcrypt = require('bcrypt')
-  , SALT_WORK_FACTOR = 10;
+  , crypto = require('crypto')
+  , SALT_WORK_FACTOR = 10
+  // default to a max of 5 attempts, result in a 2 hour lock
+  , MAX_LOGIN_ATTEMPTS = 5
+  , LOCK_TIME = 2 * 60 * 60 * 1000;
 
 exports.mongoose = mongoose;
 
 // Database connect
-var db_conn_uri = 'mongodb://username:password@your_mongo_db:00000/db_';
+//var db_conn_uri = 'mongodb://username:password@your_mongo_db:00000/db_';
+var db_conn_uri = "mongodb://bgao:connect@dharma.mongohq.com:10064/db_connect_test";
 var mongo_options = {db: { safe: true}};
 mongoose.connect(db_conn_uri, mongo_options, function(err, res) {
   if (err) {
@@ -20,13 +25,21 @@ mongoose.connect(db_conn_uri, mongo_options, function(err, res) {
 });
 
 // Database schema
-var Schema = mongoose.Schema
-  , ObjectId = Schema.ObjectId;
+var Schema = mongoose.Schema;
 
 // User schema
 var userSchema = new Schema({
   email: { type: String, required: true, index: { unique: true } },
   password: { type: String, required: true },
+  token: { type: String, required: true },
+  activated: { type: Boolean, require: true, default: false },
+  loginAttempts: { type: Number, required: true, default: 0 },
+  lockUntil: { type: Number }
+});
+
+userSchema.virtual('isLocked').get(function() {
+  // check for a future lockUntil timestamp
+  return !!(this.lockUntil && this.lockUntil > Date.now());
 });
 
 // Bcrypt middleware
@@ -52,12 +65,38 @@ userSchema.pre('save', function(next) {
 
 
 // Password verfication
-userSchema.methods.validPassword = function(candidatePassword, cb) {
+userSchema.methods.comparePassword = function(candidatePassword, cb) {
   bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
     if (err) return cb(err);
     cb(null, isMatch);
   });
-}
+};
+
+
+userSchema.methods.incLoginAttempts = function(cb) {
+  //if we have a previous lock that has expired, restart at 1
+  if (this.lockUntil && this.lockUntil < Date.now()) {
+    return this.update({
+      $set: { loginAttempts: 1 },
+      $unset: { lockUntil: 1 }
+    },cb);
+  }
+  // otherwise we're incrementing
+  var updates = { $inc: { loginAttempts: 1 } };
+  // lock the account if we've reached max attempts and it's not locked already
+  if (this.loginAttempts + 1 >= MAX_LOGIN_ATTEMPTS && !this.isLocked) {
+    updates.$set = { lockUntil: Date.now() + LOCK_TIME };
+  }
+  return this.update(updates, cb);
+};
+
+
+// expose enum on the model, and provide an internal convenience reference
+userSchema.statics.failedLogin = {
+  NOT_FOUND: 0,
+  PASSWORD_INCORRECT: 1,
+  MAX_ATTEMPTS: 2
+};
 
 
 // Register new user
@@ -76,6 +115,7 @@ userSchema.statics.register = function(user, cb) {
     });
   });
 };
+
 
 // Export user model
 exports.User = mongoose.model('User', userSchema);
