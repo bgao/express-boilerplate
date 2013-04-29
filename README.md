@@ -12,8 +12,8 @@ However, I feel it could be more useful, if some most popular components were in
 ## Development
 After you initialize your project, you'll have a basic app with a simple User model (email, password) using Mongoose, signup/login/logout features using the Passport Local-Strategy authentication in Twitter-Bootstrap style.
 
-You need to update ./app.js and ./models/user.js for MongoDB configuration.
-You need to update ./routes/mailer.js for Nodemailer configuration.
+You need to update [./app.js](https://github.com/bgao/express-boilerplate/blob/master/templates/app/app.js) and [./models/user.js](https://github.com/bgao/express-boilerplate/blob/master/templates/models/user.js) for MongoDB configuration.<br/>
+You need to update [./routes/mailer.js](https://github.com/bgao/express-boilerplate/blob/master/templates/routes/mailer.js) for Nodemailer configuration.
 
 It supports the latest version of Express.js and Node.js and the others, as I didn't restrict the version. So please let me know, if there's anything broken.
 A list of dependencies:
