@@ -1,7 +1,7 @@
 # express-boilerplate
 ===================
 
-Express.js boilerplate integrated Passport, Nodemailer and Initializr(Bootstrap).
+Express.js boilerplate integrated <strong>Passport, Nodemailer and Initializr(Bootstrap)</strong>.
 
 This project stole [node-boilerplate](https://github.com/robrighter/node-boilerplate#node-boilerplate-version-2)'s idea, which I think is the most easy-use boilerplate ever.
 
