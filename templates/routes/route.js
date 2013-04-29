@@ -1,5 +1,6 @@
 var passport = require('passport')
   , pass_local = require('./pass-local')
+  , mailer = require('./mailer')
   , User = require('../models/user').User;
   
 
@@ -10,13 +11,28 @@ module.exports = function(app) {
   });
 
   app.post('/register', function(req, res) {
-    User.register({email: req.body.email, password: req.body.password}, function(err, user) {
+    User.register({ email: req.body.email, password: req.body.password }, function(err, user) {
       if (err) {
         console.log(err);
         // TODO: Update the view to show errors
+      } else {
+	mailer(user);
       }
       res.redirect('/');
     });
+  });
+
+  app.get('/register', function(req, res) {
+    if (typeof req.query['token'] !== 'undefined') {
+      User.activate(req.query['token'], function(err, user) {
+	if (err) {
+	  console.log(err);
+	} else {
+	  req.user = user;
+	}
+	res.redirect('/login');
+      });
+    }
   });
 
   // POST /login

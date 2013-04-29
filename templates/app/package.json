@@ -15,7 +15,8 @@
     "passport": "*",
     "passport-local": "*",
     "connect-flash": "*",
-    "bcrypt": "*"
+    "bcrypt": "*",
+    "nodemailer": "*"
   },
   "tests": {
     "mocha": "*"

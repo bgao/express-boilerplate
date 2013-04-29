@@ -1,6 +1,7 @@
 /**
  * User model
- * Mostly copied from http://blog.mongodb.org/post/32866457221/password-authentication-with-mongoose-part-1
+ * Ideas from http://blog.mongodb.org/post/32866457221/password-authentication-with-mongoose-part-1
+ * and http://devsmash.com/blog/implementing-max-login-attempts-with-mongoose
  */
 var mongoose = require('mongoose')
   , bcrypt = require('bcrypt')
@@ -8,13 +9,15 @@ var mongoose = require('mongoose')
   , SALT_WORK_FACTOR = 10
   // default to a max of 5 attempts, result in a 2 hour lock
   , MAX_LOGIN_ATTEMPTS = 5
-  , LOCK_TIME = 2 * 60 * 60 * 1000;
+  , LOCK_TIME = 2 * 60 * 60 * 1000
+  // token alive time is 24 hours
+  , TOKEN_TIME = 24 * 60 * 60 * 1000;
 
 exports.mongoose = mongoose;
 
+
 // Database connect
-//var db_conn_uri = 'mongodb://username:password@your_mongo_db:00000/db_';
-var db_conn_uri = "mongodb://bgao:connect@dharma.mongohq.com:10064/db_connect_test";
+var db_conn_uri = 'mongodb://username:password@your_mongo_db:00000/db_';
 var mongo_options = {db: { safe: true}};
 mongoose.connect(db_conn_uri, mongo_options, function(err, res) {
   if (err) {
@@ -24,23 +27,40 @@ mongoose.connect(db_conn_uri, mongo_options, function(err, res) {
   }
 });
 
+
 // Database schema
 var Schema = mongoose.Schema;
+
 
 // User schema
 var userSchema = new Schema({
   email: { type: String, required: true, index: { unique: true } },
   password: { type: String, required: true },
-  token: { type: String, required: true },
-  activated: { type: Boolean, require: true, default: false },
+  active: { type: Boolean, require: true, default: false },
   loginAttempts: { type: Number, required: true, default: 0 },
-  lockUntil: { type: Number }
+  lockUntil: { type: Number },
+  tokenString: { type: String },
+  tokenExpires: { type: Number }
 });
+
+
+// expose enum on the model, and provide an internal convenience reference
+// TODO: replace the error message with this enum, then show messages from views
+userSchema.statics.failedLogin = {
+  NOT_FOUND:          0,
+  PASSWORD_INCORRECT: 1,
+  MAX_ATTEMPTS:       2,
+  INACTIVE:           3,
+  TOKEN_UNMATCH:      4,
+  TOKEN_EXPIRES:      5
+};
+
 
 userSchema.virtual('isLocked').get(function() {
   // check for a future lockUntil timestamp
   return !!(this.lockUntil && this.lockUntil > Date.now());
 });
+
 
 // Bcrypt middleware
 userSchema.pre('save', function(next) { 
@@ -58,7 +78,12 @@ userSchema.pre('save', function(next) {
       
       // override the cleartext password with the hashed one
       user.password = hash;
-      next();
+      // update token
+      crypto.randomBytes(32, function(ex, buf) {
+	user.tokenString = buf.toString('hex');
+	user.tokenExpires = Date.now() + TOKEN_TIME;
+	next();
+      });
     });
   });
 });
@@ -91,14 +116,7 @@ userSchema.methods.incLoginAttempts = function(cb) {
 };
 
 
-// expose enum on the model, and provide an internal convenience reference
-userSchema.statics.failedLogin = {
-  NOT_FOUND: 0,
-  PASSWORD_INCORRECT: 1,
-  MAX_ATTEMPTS: 2
-};
-
-
+// Static methods
 // Register new user
 userSchema.statics.register = function(user, cb) {
   var self = new this(user);
@@ -110,12 +128,30 @@ userSchema.statics.register = function(user, cb) {
     self.save(function(err) {
       if (err) {
         return cb(err);
-      }
-      cb(null, user);
+      } 
+      cb(null, self);
     });
   });
 };
 
+// Activate new user
+userSchema.statics.activate = function(token, cb) {
+  this.findOne( { tokenString: token, active: false }, function(err, existingUser) {
+    if (err) { return cb(err); }
+    if (existingUser) {
+      if (existingUser.tokenExpires > Date.now()) {
+	existingUser.update({
+	  $set: {active: true}
+	}, cb);
+	// return cb(null, existingUser);
+      } else {
+	return cb("User token has expired.");
+      }
+    } else {
+      return cb("User token doesn't exist or user account is already active.");
+    }
+  });
+};
 
 // Export user model
 exports.User = mongoose.model('User', userSchema);

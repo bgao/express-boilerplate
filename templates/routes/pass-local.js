@@ -21,6 +21,11 @@ passport.use(new LocalStrategy( {
 	return done(null, false, { message: 'Invalid email address.' }); 
       }
 
+      // check if the account is active
+      if (!user.active) {
+	return done(null, false, { message: 'Account is inactive.' });
+      }
+
       // check if the account is currently locked
       if (user.isLocked) {
 	// just increment login attempts if account is already locked
