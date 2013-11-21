@@ -15,6 +15,7 @@ copy .\templates\app\Makefile .\Makefile
 copy .\templates\models\user.js .\models\user.js
 copy .\templates\routes\route.js .\routes\route.js
 copy .\templates\routes\pass-local.js .\routes\pass-local.js
+copy .\templates\routes\mailer.js .\routes\mailer.js
 copy .\templates\test\stub.js .\test\stub.js
 copy -r .\templates\static\* .\static\
 copy .\templates\views\*.jade .\views\
