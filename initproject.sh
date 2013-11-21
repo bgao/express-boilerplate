@@ -15,6 +15,7 @@ cp ./templates/app/Makefile ./Makefile
 cp ./templates/models/user.js ./models/user.js
 cp ./templates/routes/route.js ./routes/route.js
 cp ./templates/routes/pass-local.js ./routes/pass-local.js
+cp ./templates/routes/mailer.js ./routes/mailer.js
 cp ./templates/test/stub.js ./test/stub.js
 cp -r ./templates/static/* ./static/
 cp ./templates/views/*.jade ./views/
